@@ -10,7 +10,8 @@ PRODUCT_PACKAGES += \
     Profiles \
     Recorder \
     Seedvault \
-    Twelve
+    Twelve \
+    Jelly
 
 ifneq ($(PRODUCT_NO_CAMERA),true)
 PRODUCT_PACKAGES += \
