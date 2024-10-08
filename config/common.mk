@@ -2,7 +2,7 @@
 $(call inherit-product-if-exists, vendor/extra/product.mk)
 include vendor/mist/config/mist.mk
 
-PRODUCT_BRAND ?= LineageOS
+PRODUCT_BRAND ?= MistOS
 
 ifeq ($(PRODUCT_GMS_CLIENTID_BASE),)
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
