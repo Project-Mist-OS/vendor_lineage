@@ -29,9 +29,6 @@ PRODUCT_DEXPREOPT_SPEED_APPS += \
     TrebuchetQuickStep
 endif
 
-PRODUCT_PACKAGES += \
-    TrebuchetOverlay
-
 # Charger
 PRODUCT_PACKAGES += \
     charger_res_images
