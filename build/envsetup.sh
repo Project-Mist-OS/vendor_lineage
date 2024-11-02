@@ -922,6 +922,33 @@ function fixup_common_out_dir() {
     fi
 }
 
+function flash_images() {
+    local fastboot_devices=$(fastboot devices)
+    
+    if [[ -z "$fastboot_devices" ]]; then
+        echo "Device is not in bootloader mode. Rebooting to bootloader..."
+        adb reboot bootloader
+        sleep 10  # Wait for the device to enter bootloader mode
+    fi
+
+    while [[ -z "$(fastboot devices)" ]]; do
+        echo "Waiting for device to enter bootloader mode..."
+        sleep 2
+    done
+
+    local device_codename=$(get_build_var TARGET_DEVICE)
+    local image_dir="$OUT/obj/PACKAGING/target_files_intermediates/lineage_${device_codename}-target_files/IMAGES"
+
+    fastboot flash boot "$image_dir/boot.img"
+    fastboot flash dtbo "$image_dir/dtbo.img"
+    fastboot flash init_boot "$image_dir/init_boot.img"
+    fastboot flash vbmeta "$image_dir/vbmeta.img"
+    fastboot flash vendor_boot "$image_dir/vendor_boot.img"
+    fastboot flash vendor_kernel_boot "$image_dir/vendor_kernel_boot.img"
+
+    echo "Flashing completed!"
+}
+
 # Override host metadata to make builds more reproducible and avoid leaking info
 export BUILD_USERNAME=nobody
 export BUILD_HOSTNAME=android-build
