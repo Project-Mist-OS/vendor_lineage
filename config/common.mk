@@ -146,6 +146,10 @@ PRODUCT_PACKAGES += \
     SimpleDeviceConfig \
     SimpleSettingsConfig
 
+# Dalvik
+PRODUCT_VENDOR_PROPERTIES += \
+    dalvik.vm.dex2oat64.enabled?=$(TARGET_SUPPORTS_64_BIT_APPS)
+
 # Extra tools in Lineage
 PRODUCT_PACKAGES += \
     bash \
