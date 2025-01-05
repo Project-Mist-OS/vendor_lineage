@@ -1,5 +1,6 @@
 # Allow vendor/extra to override any property by setting it first
 $(call inherit-product-if-exists, vendor/extra/product.mk)
+include vendor/mist/config/mist.mk
 
 PRODUCT_BRAND ?= LineageOS
 
