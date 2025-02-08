@@ -16,12 +16,11 @@
 
 from __future__ import print_function
 
-import base64
 import glob
 import json
-import netrc
 import os
 import re
+import subprocess
 import sys
 import urllib.error
 import urllib.parse
@@ -49,21 +48,6 @@ if not depsonly:
     print("Device %s not found. Attempting to retrieve device repository from LineageOS Github (http://github.com/LineageOS)." % device)
 
 repositories = []
-
-try:
-    authtuple = netrc.netrc().authenticators("api.github.com")
-
-    if authtuple:
-        auth_string = ('%s:%s' % (authtuple[0], authtuple[2])).encode()
-        githubauth = base64.encodestring(auth_string).decode().replace('\n', '')
-    else:
-        githubauth = None
-except:
-    githubauth = None
-
-def add_auth(githubreq):
-    if githubauth:
-        githubreq.add_header("Authorization","Basic %s" % githubauth)
 
 if not depsonly:
     githubreq = urllib.request.Request("https://raw.githubusercontent.com/LineageOS/mirror/main/default.xml")
@@ -204,6 +188,8 @@ def add_to_manifest(repositories):
                 project.attrib["remote"] = repo_remote
                 project.attrib["clone-depth"] = "1"
                 del project.attrib["revision"]
+        if project.attrib.get("revision", None) == get_default_revision():
+            del project.attrib["revision"]
         print("Adding dependency: %s -> %s" % (project.attrib["name"], project.attrib["path"]))
         lm.append(project)
 
@@ -258,30 +244,34 @@ def fetch_dependencies(repo_path):
     for deprepo in verify_repos:
         fetch_dependencies(deprepo)
 
-def has_branch(branches, revision):
-    return revision in [branch['name'] for branch in branches]
-
 def get_default_or_fallback_revision(repo_name):
     default_revision = get_default_revision()
     print("Default revision: %s" % default_revision)
     print("Checking branch info")
 
-    githubreq = urllib.request.Request("https://api.github.com/repos/LineageOS/" + repo_name + "/branches")
-    add_auth(githubreq)
-    result = json.loads(urllib.request.urlopen(githubreq, timeout=5).read().decode())
-    if has_branch(result, default_revision):
+    try:
+        stdout = subprocess.run(
+            ["git", "ls-remote", "-h", "https://:@github.com/LineageOS/" + repo_name],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        ).stdout.decode()
+        branches = [x.split("refs/heads/")[-1] for x in stdout.splitlines()]
+    except:
+        return ""
+
+    if default_revision in branches:
         return default_revision
 
     if os.getenv('ROOMSERVICE_BRANCHES'):
         fallbacks = list(filter(bool, os.getenv('ROOMSERVICE_BRANCHES').split(' ')))
         for fallback in fallbacks:
-            if has_branch(result, fallback):
+            if fallback in branches:
                 print("Using fallback branch: %s" % fallback)
                 return fallback
 
     print("Default revision %s not found in %s. Bailing." % (default_revision, repo_name))
     print("Branches found:")
-    for branch in [branch['name'] for branch in result]:
+    for branch in branches:
         print(branch)
     print("Use the ROOMSERVICE_BRANCHES environment variable to specify a list of fallback branches.")
     return ""
